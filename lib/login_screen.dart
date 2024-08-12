@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth_service.dart';
+import 'attendance_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isCheckedIn = false; // Untuk melacak status check-in
 
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final attendanceService = Provider.of<AttendanceService>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -43,9 +45,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   _emailController.text,
                   _passwordController.text,
                 );
+
+                // Setelah login, lakukan check-in otomatis
+                await attendanceService.checkIn();
+                setState(() {
+                  _isCheckedIn = true;
+                });
               },
-              child: const Text('Login'),
+              child: const Text('Login and Check-in'),
             ),
+            if (_isCheckedIn)
+              ElevatedButton(
+                onPressed: () async {
+                  await attendanceService.checkOut();
+                  setState(() {
+                    _isCheckedIn = false;
+                  });
+                },
+                child: const Text('Check-out'),
+              ),
             TextButton(
               onPressed: () async {
                 await authService.createUserWithEmailAndPassword(
